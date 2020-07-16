@@ -1,0 +1,123 @@
+@import 'base/input.scss';
+@import 'base/list.scss';
+@import 'base/links.scss';
+@import 'base/grid.scss';
+@import 'base/buttons.scss';
+@import 'pages/home.scss';
+
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: $color-text;
+  background-color: $color-background;
+  font-size: 1.7rem;
+  margin: $margin-body;
+    max-width: 800px;
+}
+
+h1 {
+  font-size: $font-size-h1;
+  font-weight: 700; // Bold
+}
+
+h2 {
+  font-size: $font-size-h2;
+  font-weight: 500; // Medium
+}
+
+.tabs {
+  margin-bottom: $spacing-lg;
+
+  h2 {
+    display: inline;
+    margin-right: $spacing-lg;
+
+    a.tab--active {
+      color: $color-text;
+    }
+
+    a {
+      color: $color-text-fade;
+    }
+  }
+}
+
+.tile-grid {
+  // Grid with a gap makes it easy to space the tiles out
+  // and overflow onto the next line when necessary
+  display: grid;
+  grid-gap: $spacing-element;
+
+  // 3 x 105px makes it fill an iPhone 6/7/8 screen
+  grid-template-columns: repeat(auto-fill, 105px);
+}
+
+.tile {
+  background-color: $color-background-secondary;
+  border-radius: $border-radius;
+  padding: $padding-element;
+  font-size: $font-size-callout;
+  font-weight: $font-weight-medium;
+
+  .tile__icon {
+    font-size: $font-size-h2;
+  }
+
+  .tile__content {
+    margin-top: $spacing-xs;
+
+    // Allow space for two lines
+    height: calc(#{$font-size-callout} * 2);
+    line-height: 1;
+
+    // Vertically align the text within
+    display: flex;
+    align-items: center;
+  }
+
+  &.tile--active {
+    background-color: $color-highlight-primary;
+    color: $color-text-inverted;
+  }
+
+  &.tile--clickable {
+    cursor: pointer;
+  }
+}
+
+.device {
+  position: relative;
+  margin-bottom: 60px;
+
+  ul {
+    padding: 0;
+
+    li {
+      list-style-type: none;
+
+      // Move the power toggle to top-right
+      &.power {
+        label.property-name-label {
+          display: none;
+        }
+
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    }
+  }
+}
+
+//
+//.color-picker {
+//    .color-circle {
+//        max-width: 500px;
+//        margin: 0 auto;
+//    }
+//}

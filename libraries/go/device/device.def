@@ -1,0 +1,59 @@
+message Device {
+    // id is the globally unique identifier for this device
+    string id
+
+    // name is the friendly name for this device
+    string name
+
+    // type is the specific device type e.g. HS100
+    string type
+
+    // kind is the kind of device e.g. plug
+    string kind
+
+    // controller_name is the name of the controller that manages this device
+    string controller_name
+
+    // attributes contains arbitrary metadata about the device
+    map[string]any attributes
+
+    // state_providers is an array of controller names that provide state for this device
+    []string state_providers
+
+    // state is the set of properties that can be set
+    map[string]Property state
+
+    // commands are stateless commands that can be called
+    map[string]Command commands
+}
+
+message Property {
+    any value
+    string type
+    *float64 min
+    *float64 max
+    string interpolation
+    []Option options
+}
+
+message Command {
+    map[string]Arg args
+}
+
+message Arg {
+    bool required
+    string type
+    *float64 min
+    *float64 max
+    []Option options
+}
+
+message Option {
+    string value
+    string name
+}
+
+message DeviceStateChangedEvent {
+    event_name = "device-state-changed"
+    Device device (required)
+}

@@ -1,0 +1,38 @@
+service User {
+    path = "service.user"
+
+    rpc GetUser(GetUserRequest) GetUserResponse {
+        method = "GET"
+        path = "/user"
+    }
+
+    rpc ListUsers(ListUsersRequest) ListUsersResponse {
+        method = "GET"
+        path = "/users"
+    }
+}
+
+// ---- Domain messages ---- //
+
+message User {
+    uint32 id
+    string name
+    time created_at
+    time updated_at
+}
+
+// ---- Request & Response messages ---- //
+
+message GetUserRequest {
+    uint32 user_id
+}
+
+message GetUserResponse {
+    User user
+}
+
+message ListUsersRequest {}
+
+message ListUsersResponse {
+    []User users
+}

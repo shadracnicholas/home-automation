@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <title>Home Automation Logs</title>
+        <style>
+            body {
+                padding: 20px;
+                font-family: monospace;
+            }
+
+            table {
+                width: 100%;
+                word-break: break-all;
+            }
+
+            table td {
+                vertical-align: top;
+            }
+
+            .severity {
+                width: 10px;
+                height: 10px;
+                border-radius: 10px;
+                display: inline-block;
+            }
+
+            .severity.DEBUG { background-color: #CCC; }
+            .severity.INFO { background-color: #25d0ff; }
+            .severity.WARN { background-color: #ffd32d; }
+            .severity.ERROR { background-color: #ff694b; }
+
+            table .metadata {
+                max-width: 200px;
+            }
+
+            table .metadata pre {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            table .raw {
+                display: none;
+            }
+
+            table .raw pre {
+                background-color: #F9F9F9;
+                padding: 10px;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+        </style>
+    </head>
+    <body>
+        <form id="filter-form">
+            <label for="services">Services</label>
+            <input type="text" name="services" value="{{.Services}}">
+
+            <label for="severity">Severity</label>
+            <select name="severity">
+                <option value="0" {{if eq .Severity 0}}selected{{end}}></option>
+                <option value="2" {{if eq .Severity 2}}selected{{end}}>Debug</option>
+                <option value="3" {{if eq .Severity 3}}selected{{end}}>Info</option>
+                <option value="5" {{if eq .Severity 5}}selected{{end}}>Warning</option>
+                <option value="6" {{if eq .Severity 6}}selected{{end}}>Error</option>
+            </select>
+
+            <label for="since_time">Since</label>
+            <input type="datetime-local" name="since_time" id="since_time" value="{{.SinceTime}}">
+
+            <label for="until_time">Until</label>
+            <input type="datetime-local" name="until_time" id="until_time" value="{{.UntilTime}}">
+
+            <label for="reverse">Reverse</label>
+            <input type="checkbox" name="reverse" value="true" {{if .Reverse}}checked{{end}}>
+
+            <input type="submit" value="Filter">
+        </form>
+
+        <table width="100%">
+            <thead>
+                <tr>
+                    <td nowrap>Timestamp</td>
+                    <td nowrap>Service</td>
+                    <td nowrap>Severity</td>
+                    <td nowrap>Message</td>
+                    <td class="metadata">Metadata</td>
+                </tr>
+            </thead>
+            <tbody id="logs-tbody">
+                {{range .FormattedEvents}}
+                    <tr>
+                        <td nowrap>{{.Timestamp}}</td>
+                        <td nowrap>{{.Service}}</td>
+                        <td nowrap>
+                            <div class="severity {{.Severity}}"></div>
+                            {{.Severity}}
+                        </td>
+                        <td>
+                            {{.Message}}
+                            <input type="checkbox" data-uuid="{{.UUID}}" class="show-raw" name="show-raw" onclick="showRaw(event)">
+                        </td>
+                        <td class="metadata"><pre>{{.Metadata}}</pre></td>
+                    </tr>
+
+                    <tr class="raw" id="raw-{{.UUID}}">
+                        <td colspan="5"><pre>{{.Raw}}</pre></td>
+                    </tr>
+
+                {{end}}
+            </tbody>
+        </table>
+
+        <script>
+            window.onload = function() {
+                document.getElementById('filter-form').onsubmit = function() {
+                    // If until hasn't been changed, set it to blank to leave it as "now"
+                    // otherwise you forget about it and accidentally look at old logs.
+                    const until = document.getElementById("until_time");
+                    if (until.value === "{{.UntilTime}}") {
+                        until.value = "";
+                    }
+                };
+
+                // Construct the WebSocket URL (current URL + /ws + query params) and connect to it
+                const l = window.location;
+                const search = (l.search ? l.search + "&" : "?") + "since_uuid=" + "{{.LastUUID}}";
+                console.log(search);
+                const socket = new WebSocket(((l.protocol === "https:") ? "wss://" : "ws://") + l.host + "/ws" + search);
+
+                socket.onopen = function () {
+                    console.log("Connected to WebSocket");
+                };
+
+                socket.onclose = function () {
+                  console.error("WebSocket connection closed");
+                };
+
+                socket.onerror = function (e) {
+                  console.error(e);
+                };
+
+                socket.onmessage = function (e) {
+                    const data = JSON.parse(e.data);
+                    console.log(data["UUID"]);
+
+                    const newRows = `
+                        <tr>
+                          <td nowrap>${data["Timestamp"]}</td>
+                          <td nowrap>${data["Service"]}</td>
+                          <td nowrap>
+                            <div class="severity ${data["Severity"]}"></div>
+                            ${data["Severity"]}
+                          </td>
+                          <td>
+                            ${data["Message"]}
+                            <input type="checkbox" data-uuid="${data["UUID"]}" class="show-raw" name="show-raw" onclick="showRaw(event)">
+                          </td>
+                          <td class="metadata"><pre>${data["Metadata"]}</pre></td>
+                        </tr>
+                        <tr class="raw" id="raw-${data["UUID"]}">
+                          <td colspan="5"><pre>${data["Raw"]}</pre></td>
+                        </tr>
+                    `;
+
+                    const tbody = document.getElementById("logs-tbody");
+
+                    {{if .Reverse}}
+                        tbody.innerHTML = newRows + tbody.innerHTML;
+                    {{else}}
+                        tbody.innerHTML += newRows;
+                    {{end}}
+                };
+            };
+
+            function showRaw(e) {
+                const td = document.getElementById("raw-" + e.target.dataset.uuid);
+                td.style.display = e.target.checked ? "table-row" : "none";
+            }
+        </script>
+    </body>
+</html>

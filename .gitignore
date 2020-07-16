@@ -1,0 +1,8 @@
+data/
+*.db
+.npmrc
+dist/
+node_modules/
+vendor/
+service.registry.device/devices.json
+/log/

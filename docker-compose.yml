@@ -1,0 +1,193 @@
+# Using version 2.1 for _extends_ support
+version: "2.1"
+
+services:
+  # Templates
+  go-service:
+    build:
+      dockerfile: dockerfiles/go.dev.dockerfile
+      context: .
+    volumes:
+      - .:/app
+    env_file:
+      - ./private/config/dev/common.env
+
+  # Services
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    ports:
+      - 8080:8080
+
+  filebeat:
+    build:
+      dockerfile: filebeat/Dockerfile
+      context: .
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  logstash:
+    build:
+      dockerfile: logstash/Dockerfile
+      context: .
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./log:/var/log
+    ports:
+      - 7514:7514 # Syslog
+      - 5044:5044 # Beats
+
+  mysql:
+    image: mysql:latest
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: home_automation
+    ports:
+      - 3306:3306
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+
+  service.api-gateway:
+    image: shadracnicholas/drawbridge
+    volumes:
+      - ./service.api-gateway/config.dev.yaml:/config/config.yaml
+    ports:
+      - 7005:80
+
+  service.controller.hue:
+    build:
+      dockerfile: ./service.controller.hue/dev.dockerfile
+      context: .
+    image: home-automation-controller-hue
+    volumes:
+      - ./service.controller.hue:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./libraries/javascript:/usr/src/libraries/javascript
+      - /usr/src/libraries/javascript/node_modules
+    ports:
+      - 7007:80
+    environment:
+      NODE_ENV: development
+
+  service.controller.infrared:
+    build:
+      dockerfile: ./service.controller.infrared/dev.dockerfile
+      context: .
+    image: home-automation-controller-infrared
+    volumes:
+      - ./service.controller.infrared:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./libraries/javascript:/usr/src/libraries/javascript
+      - /usr/src/libraries/javascript/node_modules
+    ports:
+      - 7008:80
+
+  service.controller.plug:
+    build:
+      dockerfile: service.controller.plug/dev.dockerfile
+      context: .
+    image: home-automation-controller-plug
+    volumes:
+      - ./service.controller.plug:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./libraries/javascript:/usr/src/libraries/javascript
+      - /usr/src/libraries/javascript/node_modules
+    ports:
+      - 7009:80
+    environment:
+      NODE_ENV: development
+
+  service.device-registry:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.device-registry
+    ports:
+      - 7001:80
+    env_file:
+      - ./private/config/dev/service.device-registry.env
+
+  service.dmx:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.dmx
+    ports:
+      - 7012:80
+
+  service.event-bus:
+    build:
+      dockerfile: ./service.event-bus/dev.dockerfile
+      context: .
+    image: home-automation-service-event-bus
+    volumes:
+      - ./service.event-bus:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./libraries/javascript:/usr/src/libraries/javascript
+      - /usr/src/libraries/javascript/node_modules
+    ports:
+      - 7004:80
+    environment:
+      NODE_ENV: development
+
+  service.log:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.log
+    volumes:
+      - ./log/:/var/log:ro
+    ports:
+      - 7020:80
+
+  service.ping:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.ping
+    ports:
+      - 7011:80
+
+  service.scene:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.scene
+    ports:
+      - 7010:80
+
+  service.user:
+    extends:
+      service: go-service
+    build:
+      args:
+        service_name: service.user
+    ports:
+      - 7013:80
+
+  web.client:
+    build:
+      dockerfile: ./web.client/dev.dockerfile
+      context: .
+    image: home-automation-web-client
+    volumes:
+      - ./web.client:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./libraries/javascript:/usr/src/libraries/javascript
+      - /usr/src/libraries/javascript/node_modules
+    ports:
+      - 7000:8080

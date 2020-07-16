@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+TICK="\xE2\x9C\x94"
+GREEN="\033[32m"
+RESET="\033[0m"
+
+# Go to the root home-automation directory
+cd "$(dirname "$0")/.."
+
+printf "Installing tools...\n"
+
+printf "bolt "
+go install -ldflags "-X main.BuildDirectory=$(pwd)" ./tools/bolt
+printf "$GREEN$TICK$RESET\n"
+
+printf "deploy "
+go install -ldflags "-X main.BuildDirectory=$(pwd)" ./tools/deploy
+printf "$GREEN$TICK$RESET\n"
+
+printf "hooks "
+# Trailing slash copies contents of hooks to .git/hooks
+cp -pR ./tools/hooks/ ./.git/hooks
+printf "$GREEN$TICK$RESET\n"
+
+printf "jrpc "
+go install ./tools/jrpc
+printf "$GREEN$TICK$RESET\n"
