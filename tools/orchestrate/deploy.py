@@ -4,6 +4,7 @@ import argparse
 import configparser
 import os
 import subprocess
+import sys
 
 def docker(service, status, config):
     script = dir_path + '/docker/status.sh' if status else dir_path + '/docker/deploy.sh'
@@ -112,4 +113,4 @@ def run():
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-exit(run())
+sys.exit(run())
