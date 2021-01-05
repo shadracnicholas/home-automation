@@ -29,7 +29,8 @@ class Service:
         # Create the API
         self.api = Api(self.app)
 
-    def present_documentation(self):
+    @staticmethod
+    def present_documentation():
         """Present some documentation."""
 
         # Get the path of the running script (not this script)
